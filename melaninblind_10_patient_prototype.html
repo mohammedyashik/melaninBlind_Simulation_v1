@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>melaninBlind 10 Patient Prototype</title>
+  <style>
+    :root {
+      --ink: #172026;
+      --muted: #5c6870;
+      --line: #d3dde2;
+      --surface: #f7f9fa;
+      --blue: #006b6f;
+      --brown: #8a4f10;
+      --green: #0f7a45;
+      --amber: #a35a00;
+      --red: #b42318;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: #fff;
+    }
+    header {
+      padding: 24px 30px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    main {
+      display: grid;
+      grid-template-columns: 470px minmax(0, 1fr);
+      gap: 20px;
+      padding: 20px 30px 32px;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 12px;
+      min-height: 82px;
+    }
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .metric strong {
+      font-size: 22px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 700;
+    }
+    tbody tr {
+      cursor: pointer;
+    }
+    tbody tr:hover {
+      background: #f2f7f8;
+    }
+    tbody tr.selected {
+      background: #eefafa;
+      outline: 2px solid #8fc7ca;
+      outline-offset: -2px;
+    }
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    .green { color: var(--green); background: #effaf4; border-color: #bfe3cf; }
+    .amber { color: var(--amber); background: #fff7ed; border-color: #efc38a; }
+    .red { color: var(--red); background: #fff1f0; border-color: #f0b8b2; }
+    .blue { color: var(--blue); background: #eefafa; border-color: #afd7da; }
+    .chart {
+      width: 100%;
+      height: 310px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      margin-top: 8px;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .note {
+      border-left: 4px solid var(--amber);
+      background: #fff7ed;
+      padding: 11px 13px;
+      color: #4a3320;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    button {
+      width: 100%;
+      border: 1px solid var(--blue);
+      background: var(--blue);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .filter-button {
+      width: auto;
+      margin: 0;
+      padding: 8px 8px;
+      background: #fff;
+      color: var(--blue);
+      font-size: 12px;
+    }
+    .filter-button.active {
+      background: var(--blue);
+      color: #fff;
+    }
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr; padding: 16px; }
+      header { padding: 22px 16px 14px; }
+    }
+    @media (max-width: 720px) {
+      .summary, .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px) {
+      .summary, .detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>melaninBlind 10 Patient Synthetic Prototype</h1>
+    <p>
+      Demo cohort showing how MelaninBlind differentiates lesion activity across 10 patients using paired
+      lesion-vs-adjacent EIS patterns. Four patients are intentionally simulated as non-normal triage activity.
+    </p>
+  </header>
+
+  <main>
+    <section>
+      <div class="panel">
+        <h2>Cohort Summary</h2>
+        <div class="summary">
+          <div class="metric"><span>Total patients</span><strong>10</strong></div>
+          <div class="metric"><span>Normal-like</span><strong id="normalCount">6</strong></div>
+          <div class="metric"><span>Suspected activity</span><strong id="suspectedCount">4</strong></div>
+          <div class="metric"><span>Invalid readings</span><strong id="invalidCount">0</strong></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Patient Results</h2>
+        <div class="filters" aria-label="Cohort filters">
+          <button class="filter-button active" data-filter="all">All</button>
+          <button class="filter-button" data-filter="normal">Normal</button>
+          <button class="filter-button" data-filter="monitor">Monitor</button>
+          <button class="filter-button" data-filter="refer">Refer</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Site</th>
+              <th>Quality</th>
+              <th>EIS index</th>
+              <th>Triage</th>
+            </tr>
+          </thead>
+          <tbody id="patients"></tbody>
+        </table>
+        <button id="download">Download synthetic cohort CSV</button>
+      </div>
+
+      <p class="note">
+        This is synthetic data for MVP demonstration only. It does not represent real patient outcomes and must not be
+        used as diagnosis. The EIS index is a prototype display value only, not a clinically validated Nevisense score.
+      </p>
+    </section>
+
+    <section>
+      <div class="panel">
+        <h2>Selected Patient Condition</h2>
+        <div class="detail-grid">
+          <div class="metric"><span>Patient</span><strong id="dPatient">-</strong></div>
+          <div class="metric"><span>Triage support</span><strong id="dTriage">-</strong></div>
+          <div class="metric"><span>Prototype EIS index</span><strong id="dRisk">-</strong></div>
+          <div class="metric"><span>Meaning</span><strong id="dMeaning">-</strong></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Impedance Spectrum</h2>
+        <canvas id="spectrum" class="chart" width="980" height="310"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Direct Comparison: Lesion Difference From Adjacent Skin</h2>
+        <canvas id="difference" class="chart" width="980" height="310"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Dashboard Logic</h2>
+        <p>
+          The second graph is not only the abnormal curve. It is the direct paired comparison:
+          lesion magnitude minus adjacent-skin magnitude, shown as percentage difference at each frequency.
+          The prototype EIS index is calculated from paired magnitude difference, phase difference, and curve-shape
+          difference across the 1 kHz-2.5 MHz sweep. It is an MVP display value only and is not a validated clinical score.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h2>Clinical Interpretation Support</h2>
+        <p id="interpretation"></p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const frequencies = logSpace(1000, 2500000, 35);
+    const patients = [
+      { id: "P-001", age: 34, site: "Forearm", scenario: "normal" },
+      { id: "P-002", age: 57, site: "Back", scenario: "monitor" },
+      { id: "P-003", age: 41, site: "Leg", scenario: "normal" },
+      { id: "P-004", age: 62, site: "Shoulder", scenario: "refer" },
+      { id: "P-005", age: 29, site: "Arm", scenario: "normal" },
+      { id: "P-006", age: 48, site: "Back", scenario: "monitor" },
+      { id: "P-007", age: 53, site: "Chest", scenario: "normal" },
+      { id: "P-008", age: 66, site: "Face", scenario: "refer" },
+      { id: "P-009", age: 38, site: "Forearm", scenario: "normal" },
+      { id: "P-010", age: 44, site: "Leg", scenario: "normal" }
+    ].map((p, i) => buildPatient(p, i));
+
+    let selected = patients[1];
+    let activeFilter = "all";
+    document.getElementById("download").addEventListener("click", downloadCsv);
+    document.querySelectorAll(".filter-button").forEach(button => {
+      button.addEventListener("click", () => {
+        activeFilter = button.dataset.filter;
+        document.querySelectorAll(".filter-button").forEach(b => b.classList.toggle("active", b === button));
+        const visible = filteredPatients();
+        if (!visible.some(p => p.id === selected.id)) selected = visible[0] || patients[0];
+        render();
+      });
+    });
+
+    function logSpace(start, stop, count) {
+      const a = Math.log10(start);
+      const b = Math.log10(stop);
+      return Array.from({ length: count }, (_, i) => Math.round(Math.pow(10, a + (b - a) * i / (count - 1))));
+    }
+
+    function coleMagnitude(f, rInf, r0, tau, alpha) {
+      const x = Math.pow(2 * Math.PI * f * tau, alpha);
+      return rInf + (r0 - rInf) / Math.sqrt(1 + x * x);
+    }
+
+    function phaseDeg(f, tau, alpha, shift) {
+      const x = Math.pow(2 * Math.PI * f * tau, alpha);
+      return -Math.atan(x) * 180 / Math.PI * 0.55 + shift;
+    }
+
+    function buildPatient(base, idx) {
+      const adjacent = frequencies.map((f, i) => {
+        const personShift = 1 + 0.035 * Math.sin(idx + i * 0.2);
+        const mag = coleMagnitude(f, 420 + idx * 8, 2250 + idx * 35, 0.00022 + idx * 0.000003, 0.75) * personShift;
+        return { f, mag, phase: phaseDeg(f, 0.00022 + idx * 0.000003, 0.75, 0.15 * idx) };
+      });
+
+      const lesion = adjacent.map((p, i) => {
+        let factor = 1.03 + 0.01 * Math.sin(i + idx);
+        let phaseShift = -1.2;
+        if (base.scenario === "monitor") {
+          factor = (i > 7 && i < 27 ? 1.16 : 1.08) * (1 + 0.015 * Math.sin(i * 0.6 + idx));
+          phaseShift = -4.8;
+        }
+        if (base.scenario === "refer") {
+          factor = (i > 5 && i < 29 ? 1.36 : 1.18) * (1 + 0.025 * Math.sin(i * 0.7 + idx));
+          phaseShift = -10.5;
+        }
+        return { f: p.f, mag: p.mag * factor, phase: p.phase + phaseShift };
+      });
+
+      const quality = qualityCheck(lesion, adjacent);
+      const result = classify(lesion, adjacent, quality, base.scenario);
+      return { ...base, lesion, adjacent, quality, ...result };
+    }
+
+    function qualityCheck(lesion, adjacent) {
+      const all = [...lesion, ...adjacent];
+      const flags = [];
+      if (all.length < 40) flags.push("too_few_points");
+      if (all.some(x => !Number.isFinite(x.f) || !Number.isFinite(x.mag) || x.f <= 0)) flags.push("invalid_values");
+      const noise = Math.max(noiseRatio(lesion.map(x => x.mag)), noiseRatio(adjacent.map(x => x.mag)));
+      if (noise > 0.28) flags.push("unstable_contact_or_motion");
+      return { pass: flags.length === 0, flags, noise };
+    }
+
+    function noiseRatio(values) {
+      return median(diffs(values).map(Math.abs)) / Math.max(median(values), 1);
+    }
+
+    function classify(lesion, adjacent, quality, scenario) {
+      if (!quality.pass) return { triage: "Invalid", eisIndex: "-", meaning: "Repeat measurement", suspected: false };
+      const deltaPct = lesion.map((x, i) => Math.abs(x.mag - adjacent[i].mag) / adjacent[i].mag);
+      const phaseDiff = lesion.map((x, i) => Math.abs(x.phase - adjacent[i].phase));
+      const mid = deltaPct.slice(6, 29);
+      const spectralSlope = Math.abs(
+        slope(lesion.map(x => Math.log10(x.f)), lesion.map(x => Math.log10(x.mag))) -
+        slope(adjacent.map(x => Math.log10(x.f)), adjacent.map(x => Math.log10(x.mag)))
+      );
+      const prototypeIndex = Math.max(0, Math.min(10, Number((10 * (0.62 * median(mid) + 0.025 * median(phaseDiff) + 0.55 * spectralSlope)).toFixed(1))));
+
+      if (scenario === "normal") return { triage: "Normal-like", eisIndex: prototypeIndex, meaning: "Low paired difference", suspected: false };
+      if (scenario === "monitor") return { triage: "Monitor", eisIndex: prototypeIndex, meaning: "Moderate non-normal EIS activity", suspected: true };
+      if (scenario === "refer") return { triage: "Refer", eisIndex: prototypeIndex, meaning: "Strong non-normal EIS activity", suspected: true };
+      return { triage: "Normal-like", eisIndex: prototypeIndex, meaning: "Low paired difference", suspected: false };
+    }
+
+    function renderList() {
+      const body = document.getElementById("patients");
+      const visible = filteredPatients();
+      body.innerHTML = visible.map(p => `
+        <tr data-id="${p.id}" class="${p.id === selected.id ? "selected" : ""}">
+          <td>${p.id}</td>
+          <td>${p.site}</td>
+          <td>${p.quality.pass ? '<span class="badge green">Pass</span>' : '<span class="badge red">Fail</span>'}</td>
+          <td>${p.eisIndex}</td>
+          <td>${badge(p.triage)}</td>
+        </tr>
+      `).join("");
+      body.querySelectorAll("tr").forEach(row => {
+        row.addEventListener("click", () => {
+          selected = patients.find(p => p.id === row.dataset.id);
+          render();
+        });
+      });
+      document.getElementById("normalCount").textContent = patients.filter(p => p.triage === "Normal-like").length;
+      document.getElementById("suspectedCount").textContent = patients.filter(p => p.suspected).length;
+      document.getElementById("invalidCount").textContent = patients.filter(p => p.triage === "Invalid").length;
+    }
+
+    function filteredPatients() {
+      if (activeFilter === "normal") return patients.filter(p => p.triage === "Normal-like");
+      if (activeFilter === "monitor") return patients.filter(p => p.triage === "Monitor");
+      if (activeFilter === "refer") return patients.filter(p => p.triage === "Refer");
+      return patients;
+    }
+
+    function badge(label) {
+      if (label === "Normal-like") return '<span class="badge green">Normal-like</span>';
+      if (label === "Monitor") return '<span class="badge amber">Monitor</span>';
+      if (label === "Refer") return '<span class="badge red">Refer</span>';
+      return '<span class="badge">Invalid</span>';
+    }
+
+    function renderDetails() {
+      document.getElementById("dPatient").textContent = `${selected.id}`;
+      document.getElementById("dTriage").textContent = selected.triage;
+      document.getElementById("dRisk").textContent = `${selected.eisIndex}`;
+      document.getElementById("dMeaning").textContent = selected.meaning;
+      const action = selected.triage === "Normal-like"
+        ? "The simulated paired EIS pattern is close to adjacent healthy skin. This MVP is designed as an EIS-first triage support workflow; photo or dermoscopy can be optional clinic context, but they are not required inputs for this software result."
+        : selected.triage === "Monitor"
+          ? "The simulated lesion pattern differs moderately from adjacent skin. The next action in this EIS-first workflow is repeat measurement or follow-up. A clinician can still use other tools if available."
+          : "The simulated lesion pattern differs strongly from adjacent skin. The EIS-first triage action is referral or clinical review. This is not a diagnosis and does not replace biopsy when clinically needed.";
+      document.getElementById("interpretation").textContent = action;
+    }
+
+    function drawChart(id, series, yLabel) {
+      const canvas = document.getElementById(id);
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width;
+      const h = canvas.height;
+      const pad = { left: 72, right: 28, top: 28, bottom: 50 };
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = "#d3dde2";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, h - pad.bottom);
+      ctx.lineTo(w - pad.right, h - pad.bottom);
+      ctx.stroke();
+      const allY = series.flatMap(s => s.values);
+      const xVals = frequencies.map(Math.log10);
+      const xMin = Math.min(...xVals);
+      const xMax = Math.max(...xVals);
+      const yMin = Math.min(...allY) * (Math.min(...allY) < 0 ? 1.12 : 0.9);
+      const yMax = Math.max(...allY) * 1.1;
+      ctx.fillStyle = "#5c6870";
+      ctx.font = "12px Arial";
+      ctx.fillText(yLabel, 12, 22);
+      ctx.fillText("Frequency: 1 kHz to 2.5 MHz", w / 2 - 82, h - 16);
+      [1000, 10000, 100000, 1000000, 2500000].forEach(tick => {
+        const x = map(Math.log10(tick), xMin, xMax, pad.left, w - pad.right);
+        ctx.strokeStyle = "#edf1f3";
+        ctx.beginPath();
+        ctx.moveTo(x, pad.top);
+        ctx.lineTo(x, h - pad.bottom);
+        ctx.stroke();
+        ctx.fillStyle = "#5c6870";
+        ctx.fillText(formatFreq(tick), x - 18, h - 32);
+      });
+      series.forEach(s => {
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        s.values.forEach((value, i) => {
+          const x = map(xVals[i], xMin, xMax, pad.left, w - pad.right);
+          const y = map(value, yMin, yMax, h - pad.bottom, pad.top);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      });
+      let legendX = pad.left;
+      series.forEach(s => {
+        ctx.fillStyle = s.color;
+        ctx.fillRect(legendX, 12, 15, 3);
+        ctx.fillStyle = "#172026";
+        ctx.fillText(s.name, legendX + 22, 17);
+        legendX += 126;
+      });
+    }
+
+    function renderCharts() {
+      drawChart("spectrum", [
+        { name: "Lesion", color: "#006b6f", values: selected.lesion.map(x => x.mag) },
+        { name: "Adjacent", color: "#8a4f10", values: selected.adjacent.map(x => x.mag) }
+      ], "Magnitude (ohm)");
+      drawChart("difference", [
+        { name: "Delta %", color: "#b42318", values: selected.lesion.map((x, i) => 100 * (x.mag - selected.adjacent[i].mag) / selected.adjacent[i].mag) }
+      ], "Delta from adjacent (%)");
+    }
+
+    function render() {
+      renderList();
+      renderDetails();
+      renderCharts();
+    }
+
+    function downloadCsv() {
+      const headers = ["patient_id", "age", "body_site", "source_type", "purpose", "triage_support", "prototype_eis_index", "site_label", "frequency_hz", "magnitude_ohm", "phase_deg", "paired_delta_pct"];
+      const rows = [];
+      patients.forEach(p => {
+        p.lesion.forEach((x, i) => {
+          rows.push({
+            patient_id: p.id,
+            age: p.age,
+            body_site: p.site,
+            source_type: "synthetic",
+            purpose: "TRIAGE_SUPPORT_ONLY",
+            triage_support: p.triage,
+            prototype_eis_index: p.eisIndex,
+            site_label: "lesion",
+            frequency_hz: x.f,
+            magnitude_ohm: x.mag.toFixed(3),
+            phase_deg: x.phase.toFixed(3),
+            paired_delta_pct: (100 * (x.mag - p.adjacent[i].mag) / p.adjacent[i].mag).toFixed(3)
+          });
+        });
+      });
+      const csv = [headers.join(","), ...rows.map(row => headers.map(h => row[h]).join(","))].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "melaninblind_10_patient_SYNTHETIC_DATA_TRIAGE_SUPPORT_ONLY.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function median(values) {
+      const sorted = [...values].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    function diffs(values) {
+      return values.slice(1).map((v, i) => v - values[i]);
+    }
+
+    function slope(xs, ys) {
+      const mx = xs.reduce((a, b) => a + b, 0) / xs.length;
+      const my = ys.reduce((a, b) => a + b, 0) / ys.length;
+      let num = 0;
+      let den = 0;
+      for (let i = 0; i < xs.length; i++) {
+        num += (xs[i] - mx) * (ys[i] - my);
+        den += (xs[i] - mx) ** 2;
+      }
+      return den ? num / den : 0;
+    }
+
+    function map(value, inMin, inMax, outMin, outMax) {
+      if (inMax === inMin) return (outMin + outMax) / 2;
+      return outMin + ((value - inMin) / (inMax - inMin)) * (outMax - outMin);
+    }
+
+    function formatFreq(f) {
+      if (f >= 1000000) return `${(f / 1000000).toFixed(f === 2500000 ? 1 : 0)}M`;
+      if (f >= 1000) return `${f / 1000}k`;
+      return String(f);
+    }
+
+    render();
+  </script>
+</body>
+</html>
